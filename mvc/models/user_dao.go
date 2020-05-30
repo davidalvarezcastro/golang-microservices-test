@@ -11,10 +11,23 @@ var (
 	users = map[int64]*User{
 		123: &User{ID: 123, FirstName: "David", LastName: "Ups", Email: "myemail@gmail.com"},
 	}
+
+	UserDao usersDaoInterface
 )
 
+// init function
+func init() {
+	UserDao = &userDao{}
+}
+
+type usersDaoInterface interface {
+	GetUser(int64) (*User, *utils.ApplicationError)
+}
+
+type userDao struct{}
+
 // GetUser dao function to return an User
-func GetUser(userID int64) (*User, *utils.ApplicationError) {
+func (u *userDao) GetUser(userID int64) (*User, *utils.ApplicationError) {
 	// user := users[userID]
 
 	// if user == nil {

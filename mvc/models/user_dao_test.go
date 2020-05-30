@@ -11,7 +11,7 @@ func TestGetUserNoUserFound(t *testing.T) {
 	// Initialization:
 
 	// Execution:
-	user, err := GetUser(0)
+	user, err := UserDao.GetUser(0)
 
 	// Validation:
 	// if user != nil {
@@ -35,7 +35,7 @@ func TestGetUserNoUserFound(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	user, err := GetUser(123)
+	user, err := UserDao.GetUser(123)
 
 	assert.NotNil(t, user)
 	assert.Nil(t, err)
