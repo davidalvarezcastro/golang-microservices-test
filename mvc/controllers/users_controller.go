@@ -1,19 +1,18 @@
 package controllers
 
 import (
-	"encoding/json"
 	"github.com/davidalvarezcastro/golang-microservices-test/mvc/services"
 	"github.com/davidalvarezcastro/golang-microservices-test/mvc/utils"
-	"log"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
 // GetUser is the handler to users api
-func GetUser(resp http.ResponseWriter, req *http.Request) {
+func GetUser(c *gin.Context) {
 	// parsing param from URL
-	userIDParam := req.URL.Query().Get("user_id")
-	userID, err := strconv.ParseInt(userIDParam, 10, 64)
+	// c.Query("caller") if url like /users/:user_id?caller=123
+	userID, err := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if err != nil {
 		// return the bad request to the client
 		apiErr := &utils.ApplicationError{
@@ -22,28 +21,22 @@ func GetUser(resp http.ResponseWriter, req *http.Request) {
 			Code:       "bad_request",
 		}
 
-		apiErrJSON, _ := json.Marshal(apiErr)
-		resp.WriteHeader(apiErr.StatusCode)
-		resp.Write(apiErrJSON)
+		// c.JSON(apiErr.StatusCode, apiErr)
+		utils.RespondError(c, apiErr)
 		return
 	}
-	log.Printf("about to process user id %v (%d)", userIDParam, userID)
 
 	// calling user service
 	user, apiErr := services.UsersService.GetUser(userID)
 
 	if apiErr != nil {
-		apiErrJSON, _ := json.Marshal(apiErr)
-
-		log.Printf("json %v", apiErr)
-
 		// handle error and return to the client
-		resp.WriteHeader(apiErr.StatusCode)
-		resp.Write(apiErrJSON)
+		// c.JSON(apiErr.StatusCode, apiErr)
+		utils.RespondError(c, apiErr)
 		return
 	}
 
 	// return user to client
-	userJSON, _ := json.Marshal(user)
-	resp.Write(userJSON)
+	// c.JSON(http.StatusOK, user)
+	utils.Respond(c, http.StatusOK, user)
 }
