@@ -11,6 +11,7 @@ import (
 
 // GetUser is the handler to users api
 func GetUser(resp http.ResponseWriter, req *http.Request) {
+	// parsing param from URL
 	userIDParam := req.URL.Query().Get("user_id")
 	userID, err := strconv.ParseInt(userIDParam, 10, 64)
 	if err != nil {
@@ -28,6 +29,7 @@ func GetUser(resp http.ResponseWriter, req *http.Request) {
 	}
 	log.Printf("about to process user id %v (%d)", userIDParam, userID)
 
+	// calling user service
 	user, apiErr := services.UsersService.GetUser(userID)
 
 	if apiErr != nil {
