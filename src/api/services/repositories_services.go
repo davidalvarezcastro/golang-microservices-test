@@ -1,7 +1,8 @@
 package services
 
 import (
-	"strings"
+	"net/http"
+	"sync"
 
 	"github.com/davidalvarezcastro/golang-microservices-test/src/api/config"
 	"github.com/davidalvarezcastro/golang-microservices-test/src/api/providers/github_provider"
@@ -16,6 +17,7 @@ type reposService struct {
 
 type reposServiceInterface interface {
 	CreateRepo(input repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.APIError)
+	CreateRepos(requests []repositories.CreateRepoRequest) (repositories.CreateReposResponse, errors.APIError)
 }
 
 var (
@@ -29,10 +31,8 @@ func init() {
 
 // CreateRepo creates a new repo in our api
 func (s *reposService) CreateRepo(input repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.APIError) {
-	input.Name = strings.TrimSpace(input.Name)
-
-	if input.Name == "" {
-		return nil, errors.NewBadRequestError("invalid repo name")
+	if err := input.Validate(); err != nil {
+		return nil, err
 	}
 
 	request := github.CreateRepoRequest{
@@ -54,5 +54,79 @@ func (s *reposService) CreateRepo(input repositories.CreateRepoRequest) (*reposi
 	}
 
 	return &result, nil
+}
 
+// CreateRepo creates many repos
+func (s *reposService) CreateRepos(requests []repositories.CreateRepoRequest) (repositories.CreateReposResponse, errors.APIError) {
+	input := make(chan repositories.CreateRespositoriesResult)
+	output := make(chan repositories.CreateReposResponse)
+	defer close(output)
+
+	var wg sync.WaitGroup
+	go s.handleRepoResults(&wg, input, output)
+
+	for _, current := range requests {
+		wg.Add(1)
+		go s.createRepoConcurrent(current, input)
+	}
+
+	wg.Wait() // waits for the gorutines to be executed
+	close(input)
+
+	result := <-output
+
+	successCreations := 0
+	for _, current := range result.Results {
+		if current.Response != nil {
+			successCreations++
+		}
+	}
+
+	if successCreations == 0 {
+		result.StatusCode = result.Results[0].Error.Status()
+	} else if successCreations == len(requests) {
+		result.StatusCode = http.StatusCreated
+	} else {
+		result.StatusCode = http.StatusPartialContent
+	}
+	return result, nil
+}
+
+// handleRepoResults handles output from channel
+func (s *reposService) handleRepoResults(wg *sync.WaitGroup, input chan repositories.CreateRespositoriesResult, output chan repositories.CreateReposResponse) {
+	var results repositories.CreateReposResponse
+
+	for incomingEvent := range input {
+		repoResult := repositories.CreateRespositoriesResult{
+			Response: incomingEvent.Response,
+			Error:    incomingEvent.Error,
+		}
+		results.Results = append(results.Results, repoResult)
+		wg.Done()
+	}
+
+	output <- results
+}
+
+// createRepoConcurrent runs CreateRepo in a concurrence mode
+func (s *reposService) createRepoConcurrent(input repositories.CreateRepoRequest, output chan repositories.CreateRespositoriesResult) {
+	if err := input.Validate(); err != nil {
+		output <- repositories.CreateRespositoriesResult{
+			Error: err,
+		}
+		return
+	}
+
+	result, err := s.CreateRepo(input)
+
+	if err != nil {
+		output <- repositories.CreateRespositoriesResult{
+			Error: err,
+		}
+		return
+	}
+
+	output <- repositories.CreateRespositoriesResult{
+		Response: result,
+	}
 }
