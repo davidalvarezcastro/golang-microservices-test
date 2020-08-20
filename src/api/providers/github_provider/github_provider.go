@@ -3,11 +3,12 @@ package github_provider
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/davidalvarezcastro/golang-microservices-test/src/api/clients/restclient"
-	"github.com/davidalvarezcastro/golang-microservices-test/src/api/models/github"
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/davidalvarezcastro/golang-microservices-test/src/api/clients/restclient"
+	"github.com/davidalvarezcastro/golang-microservices-test/src/api/models/github"
 )
 
 // e31e859e9407c32095d0b41aea59950e36ef47a5
@@ -15,7 +16,7 @@ const (
 	headerAuthorization       = "Authorization"
 	headerAuthorizationFormat = "token %s"
 
-	urlCreateRepo = "https://api.github.com/user/repos"
+	urlCreateRepo = "https://api.github.com/user/repo2s"
 )
 
 func getAuthorizationHeader(accessToken string) string {

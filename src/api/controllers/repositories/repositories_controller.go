@@ -20,7 +20,9 @@ func CreateRepo(c *gin.Context) {
 		return
 	}
 
-	result, err := services.RepositoryService.CreateRepo(request)
+	cliendID := c.GetHeader("X-Client-Id")
+
+	result, err := services.RepositoryService.CreateRepo(cliendID, request)
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return

@@ -14,7 +14,9 @@ func init() {
 
 // StartApp starts the repository api
 func StartApp() {
+	// log.Info("about to map the urls", "step:1", "status:pending")
 	mapUrls()
+	// log.Info("urls succesfully mapped", "step:1", "status:success")
 
 	if err := router.Run(":8080"); err != nil {
 		panic(err)

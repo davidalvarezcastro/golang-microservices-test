@@ -1,10 +1,13 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/davidalvarezcastro/golang-microservices-test/src/api/config"
+	option_a "github.com/davidalvarezcastro/golang-microservices-test/src/api/log/option_a"
+	option_b "github.com/davidalvarezcastro/golang-microservices-test/src/api/log/option_b"
 	"github.com/davidalvarezcastro/golang-microservices-test/src/api/providers/github_provider"
 
 	"github.com/davidalvarezcastro/golang-microservices-test/src/api/models/github"
@@ -16,7 +19,7 @@ type reposService struct {
 }
 
 type reposServiceInterface interface {
-	CreateRepo(input repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.APIError)
+	CreateRepo(cliendID string, input repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.APIError)
 	CreateRepos(requests []repositories.CreateRepoRequest) (repositories.CreateReposResponse, errors.APIError)
 }
 
@@ -30,7 +33,7 @@ func init() {
 }
 
 // CreateRepo creates a new repo in our api
-func (s *reposService) CreateRepo(input repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.APIError) {
+func (s *reposService) CreateRepo(clientID string, input repositories.CreateRepoRequest) (*repositories.CreateRepoResponse, errors.APIError) {
 	if err := input.Validate(); err != nil {
 		return nil, err
 	}
@@ -41,12 +44,23 @@ func (s *reposService) CreateRepo(input repositories.CreateRepoRequest) (*reposi
 		Private:     false,
 	}
 
+	option_a.Info("about to send request to external api", fmt.Sprintf("client_id:%s", clientID), "status:pending")
+	option_b.Info("about to send request to external api",
+		option_b.Field("cliend_id", clientID),
+		option_b.Field("status", "pending"),
+	)
 	response, err := github_provider.CreateRepo(config.GetGithubAccessToken(), request)
 
 	if err != nil {
+		option_a.Error("response obtained from external api", err, fmt.Sprintf("client_id:%s", clientID), "status:error")
+		option_b.Error("response obtained from external api", err,
+			option_b.Field("cliend_id", clientID),
+			option_b.Field("status", "error"),
+		)
 		return nil, errors.NewAPIError(err.StatusCode, err.Message)
 	}
 
+	option_a.Info("response obtained from external api", fmt.Sprintf("client_id:%s", clientID), "status:success")
 	result := repositories.CreateRepoResponse{
 		ID:    response.ID,
 		Name:  response.Name,
@@ -117,7 +131,7 @@ func (s *reposService) createRepoConcurrent(input repositories.CreateRepoRequest
 		return
 	}
 
-	result, err := s.CreateRepo(input)
+	result, err := s.CreateRepo("TODO_client_id", input)
 
 	if err != nil {
 		output <- repositories.CreateRespositoriesResult{
