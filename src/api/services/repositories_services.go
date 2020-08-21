@@ -24,7 +24,7 @@ type reposServiceInterface interface {
 }
 
 var (
-	// RepositoryService is a reposiroty service var
+	// RepositoryService is a reposiroty service interface
 	RepositoryService reposServiceInterface
 )
 

@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 func TestCreateRepoInvalidInputName(t *testing.T) {
 	request := repositories.CreateRepoRequest{}
 
-	result, err := RepositoryService.CreateRepo(request)
+	result, err := RepositoryService.CreateRepo("client_id", request)
 	assert.Nil(t, result)
 	assert.NotNil(t, err)
 	assert.EqualValues(t, http.StatusBadRequest, err.Status())
@@ -45,7 +45,7 @@ func TestCreateRepoErrorFromGithub(t *testing.T) {
 		Description: "this is a description",
 	}
 
-	result, err := RepositoryService.CreateRepo(request)
+	result, err := RepositoryService.CreateRepo("client_id", request)
 	assert.Nil(t, result)
 	assert.NotNil(t, err)
 	assert.EqualValues(t, http.StatusUnauthorized, err.Status())
@@ -68,7 +68,7 @@ func TestCreateRepoNoError(t *testing.T) {
 		Description: "this is a description",
 	}
 
-	result, err := RepositoryService.CreateRepo(request)
+	result, err := RepositoryService.CreateRepo("client_id", request)
 	assert.NotNil(t, result)
 	assert.Nil(t, err)
 	assert.EqualValues(t, 123, result.ID)
